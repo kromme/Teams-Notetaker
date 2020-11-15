@@ -1,13 +1,17 @@
+"""Main module."""
 import datetime
 import io
-import logging
-import logging.config
 import os
 import subprocess
 
 from google.cloud import speech
 from google.oauth2 import service_account
 from summarizer import Summarizer
+
+from utils import get_logger, check_cmd_application_available
+
+
+logger = get_logger('teams_notetaker')
 
 
 class TeamsNotetaker():
@@ -48,26 +52,11 @@ class TeamsNotetaker():
         self.client = False
 
         # create folders
-        self._setup_logger()
         self._setup_folder()
         self._setup_paths()
         self._setup_google_speech()
 
-        self.logger.info('Teams Notetaker initialized')
-
-    def _setup_logger(self):
-        def get_logger(name, logfile):
-            log_format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-            logging.basicConfig(
-                level=logging.DEBUG, format=log_format, filename=logfile, filemode="w"
-            )
-            console = logging.StreamHandler()
-            console.setLevel(logging.DEBUG)
-            console.setFormatter(logging.Formatter(log_format))
-            logging.getLogger(name).addHandler(console)
-            return logging.getLogger(name)
-
-        self.logger = get_logger('teams_notetaker', self.logfile)
+        logger.info('Teams Notetaker initialized')
 
     def _setup_folder(self):
 
@@ -110,8 +99,9 @@ class TeamsNotetaker():
             audio_path = self.audio_path
 
         # checks whether ffmpeg can be found
-        output = subprocess.run('ffmpeg', shell=True, capture_output=True)
-        assert 'not recognized' not in str(output.stderr), 'ffmpeg not found'
+        if not check_cmd_application_available('ffmpeg'):
+            logger.error('Could not load ffmpeg')
+            return
 
         # checks whether video file is found
         assert os.path.isfile(video_path), 'Can\'t find video'
@@ -119,9 +109,9 @@ class TeamsNotetaker():
         # add overwrite parameter to ffmpeg
         overwrite_param = '-y' if overwrite else ''
         if os.path.isfile(audio_path) and overwrite:
-            self.logger.info(f'File already exists: overwriting {audio_path}')
+            logger.info(f'File already exists: overwriting {audio_path}')
         elif os.path.isfile(audio_path) and not overwrite:
-            self.logger.info(
+            logger.info(
                 f'File already exists: not overwriting {audio_path}')
             return
 
@@ -131,13 +121,13 @@ class TeamsNotetaker():
             command = f"ffmpeg {overwrite_param} -i {video_path} {audio_path}"
             subprocess.call(command, shell=True)
         except Exception as e:
-            self.logger.error(
+            logger.error(
                 'Could not extract audio file from video.', exc_info=e)
 
         # check whether file is saved
         assert os.path.isfile(
             audio_path), 'Something went wrong saving the audio file'
-        self.logger.info(f'Audio successfully extracted to {audio_path}')
+        logger.info(f'Audio successfully extracted to {audio_path}')
 
     def remove_silences_from_audio(self, audio_path: str = None):
         """Removes silences from audio file using sox
@@ -147,8 +137,9 @@ class TeamsNotetaker():
             audio_path = self.audio_path
 
         # checks whether sox can be found
-        output = subprocess.run('sox', shell=True, capture_output=True)
-        assert 'not recognized' not in str(output.stderr), 'sox not found'
+        if not check_cmd_application_available('sox'):
+            logger.error('Could not load sox')
+            return
 
         silenced_audio_path = audio_path.replace(
             ".wav", "_silence_removed.wav")
@@ -158,10 +149,10 @@ class TeamsNotetaker():
             subprocess.call(command, shell=True)
             self.audio_path = silenced_audio_path
         except Exception as e:
-            self.logger.error(
+            logger.error(
                 'Could not extract audio file from video.', exc_info=e)
 
-        self.logger.info(f'Silences successfully removed')
+        logger.info(f'Silences successfully removed')
 
     def split_audio_file(self, audio_path: str = None):
         """Split up the audio in parts of 50 seconds
@@ -179,10 +170,10 @@ class TeamsNotetaker():
             command = f"""ffmpeg -i "{audio_path}" -f segment -segment_time 50 -c copy -reset_timestamps 1 "{self.audio_part_path}" """
             subprocess.call(command, shell=True)
         except Exception as e:
-            self.logger.error(
+            logger.error(
                 'Could not extract audio file from video.', exc_info=e)
 
-        self.logger.info(
+        logger.info(
             f'Audio successfully split into {len(os.listdir(self.AUDIO_PART_FOLDER))} parts')
 
     def _setup_google_speech(self):
@@ -205,7 +196,7 @@ class TeamsNotetaker():
             # Enable automatic punctuation
             enable_automatic_punctuation=True,
         )
-        self.logger.info('Initialized Google Speech')
+        logger.info('Initialized Google Speech')
 
     def transcribe_part(self, audio_path: str) -> str:
         """Transcribes an audio file
@@ -244,7 +235,7 @@ class TeamsNotetaker():
         for i, audio_part in enumerate(files):
             audio_part_path = f"{self.AUDIO_PART_FOLDER}/{audio_part}"
             self.transcription += self.transcribe_part(audio_part_path)
-            self.logger.info(f'Transcribed {i+1} out of {len(files)}')
+            logger.info(f'Transcribed {i+1} out of {len(files)}')
 
     def summarize(self, transcription: str = None, notes_path: str = None, ratio: float = 0.2, num_sentences: int = None):
 
@@ -259,25 +250,25 @@ class TeamsNotetaker():
         # initialize the summarizer
         try:
             model = Summarizer()
-            self.logger.info(f'Summarizer initialized')
+            logger.info(f'Summarizer initialized')
         except Exception as e:
-            self.logger.error('Could not init summarizer', exc_info=e)
+            logger.error('Could not init summarizer', exc_info=e)
             return
 
         # Summarize
         try:
             self.notes = model(transcription, ratio=ratio,
                                num_sentences=num_sentences)
-            self.logger.info(
+            logger.info(
                 f'Succesfully summarized transcription with {len(transcription.split("."))} lines to {len(self.notes.split("."))} sentences.')
         except Exception as e:
-            self.logger.error('Could not summarise text', exc_info=e)
+            logger.error('Could not summarise text', exc_info=e)
             return
 
         # save
         with open(notes_path, 'w') as f:
             f.write(self.notes)
-        self.logger.info(f'Notes successfully saved to {notes_path}')
+        logger.info(f'Notes successfully saved to {notes_path}')
 
         return self.notes
 
