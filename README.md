@@ -1,5 +1,11 @@
 # Using AI to take notes of your Teams meeting
-This script allows you create a summary of the meeting you recorded in Teams. 
+This package allows you create a summary of the meeting you recorded in Teams.  
+
+Working from home everyday can be exhausting, those days where you have back to back meetings can wore you out. And at the end of day you probably have forgotten half of the information. So take notes! However, this is easier said than done. At a meeting via Teams takes more energy than in real-life, you need to compensate for the reduced amount of (non verbal) information when talking via video. Besides, when you start typing during a meeting, the others will think you're writing an email or just working, instead of paying attention.  
+
+Now there is a new solution! Using AI to take notes of your Teams meeting. The only thing you need to do is record, download the video and run script.
+
+*Note*: we're going to setup a Google API for the speech recognition, there will be [costs](https://cloud.google.com/speech-to-text/pricing) associated with this.
 
 ## Installation
 Install ffmpeg and sox:
@@ -12,9 +18,10 @@ pip install git+https://github.com/kromme/Teams-Notetaker
 ```
 
 ## Preparations
-1. Get the video: From January, 11th 2021 all Teams recordings will be stored in OneDrive directly, see [here](https://docs.microsoft.com/en-gb/MicrosoftTeams/tmr-meeting-recording-change). Until then download it from [Stream](https://web.microsoftstream.com/) > My Content > video > Download video.
-2. Setup a [Google Speech API](https://cloud.google.com/docs/authentication/getting-started) and get the `key.json` and save this file in the working directory.
-3. Clone this repository: `git clone https://github.com/kromme/Teams-Notetaker.git`
+1. [Record the meeting](https://support.microsoft.com/en-us/office/record-a-meeting-in-teams-34dfbe7f-b07d-4a27-b4c6-de62f1348c24). Make sure you have consent from the others in the meeting.
+2. Get the video: From January, 11th 2021 all Teams recordings will be stored in OneDrive directly, see [here](https://docs.microsoft.com/en-gb/MicrosoftTeams/tmr-meeting-recording-change). Until then download it from [Stream](https://web.microsoftstream.com/) > My Content > video > Download video.
+3. Setup a [Google Speech API](https://cloud.google.com/docs/authentication/getting-started) and get the `key.json` and save this file in the working directory.
+4. Clone this repository: `git clone https://github.com/kromme/Teams-Notetaker.git`
 
 ## Run
 ```
