@@ -4,13 +4,10 @@ import io
 import os
 import subprocess
 
-from google.cloud import speech
-from google.oauth2 import service_account
-from summarizer import Summarizer
-
 from .utils import get_logger, check_cmd_application_available
 from .speech_recognition import setup_google_speech, transcribe_part, transcribe_all_audioparts
 from .audio_utils import extract_audio, remove_silences_from_audio, split_audio_file
+from .summarize import summarize
 
 logger = get_logger('teams_notetaker')
 
@@ -109,44 +106,17 @@ class TeamsNotetaker():
         self.transcription = transcribe_all_audioparts(
             audio_part_folder=self.AUDIO_PART_FOLDER, client=self.client, config=self.config)
 
-    def summarize(self, transcription: str = None, notes_path: str = None, ratio: float = 0.2, num_sentences: int = None):
+    def summarize_transcription(self):
+        """Summarize the transcriptions
+        """
 
-        if transcription is None:
-            transcription = self.transcription
-        if notes_path is None:
-            notes_path = self.notes_path
-
-        assert len(transcription.split(".")
-                   ) > 1, "Transcription too short for summarization."
-
-        # initialize the summarizer
-        try:
-            model = Summarizer()
-            logger.info(f'Summarizer initialized')
-        except Exception as e:
-            logger.error('Could not init summarizer', exc_info=e)
-            return
-
-        # Summarize
-        try:
-            self.notes = model(transcription, ratio=ratio,
-                               num_sentences=num_sentences)
-            logger.info(
-                f'Succesfully summarized transcription with {len(transcription.split("."))} lines to {len(self.notes.split("."))} sentences.')
-        except Exception as e:
-            logger.error('Could not summarise text', exc_info=e)
-            return
-
-        # save
-        with open(notes_path, 'w') as f:
-            f.write(self.notes)
-        logger.info(f'Notes successfully saved to {notes_path}')
-
-        return self.notes
+        # create notes
+        self.notes = summarize(transcription=self.transcription,
+                               notes_path=self.notes_path)
 
     def run(self):
 
         self.prepare_audio()
         self.transcribe()
-        self.summarize()
+        self.summarize_transcription()
         return self.notes

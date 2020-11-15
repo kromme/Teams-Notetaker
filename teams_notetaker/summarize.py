@@ -3,7 +3,27 @@ from .utils import get_logger, check_cmd_application_available
 logger = get_logger('summarizer')
 
 
-def summarize(transcription: str = None, notes_path: str = None, ratio: float = 0.2, num_sentences: int = None):
+def summarize(transcription: str,
+              notes_path: str,
+              ratio: float = 0.2,
+              num_sentences: int = None) -> str:
+    """Uses BERT for extractive summarization
+
+    Parameters
+    ----------
+    transcription : str
+        The transcription to be summarized
+    notes_path : str
+        Path to where the notes should be saved
+    ratio : float
+        Determine the length of the summarization in ratio of length transcription
+    num_sentences : int
+        Determine the length of the summarization in number of sentences
+
+    Returns
+    -------
+    The summarized notes
+    """
 
     assert len(transcription.split(".")
                ) > 1, "Transcription too short for summarization."
