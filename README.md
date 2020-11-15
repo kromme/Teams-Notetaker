@@ -5,9 +5,11 @@ Working from home everyday can be exhausting, those days where you have back to 
 
 Now there is a new solution! Using AI to take notes of your Teams meeting. The only thing you need to do is record, download the video and run script.
 
-*Note*: we're going to setup a Google API for the speech recognition, there will be [costs](https://cloud.google.com/speech-to-text/pricing) associated with this.
-
 ![](https://images.pexels.com/photos/1766604/pexels-photo-1766604.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260 "taking notes")
+
+*Note*: we're going to setup a Google API for the speech recognition, there will be [costs](https://cloud.google.com/speech-to-text/pricing) associated with this.  
+
+
 ## Installation
 Install ffmpeg and sox:
 * [ffmpeg](https://github.com/BtbN/FFmpeg-Builds/releases)    
@@ -32,7 +34,7 @@ tn.run()
 ```
 
 
-### Summarization
+## Summarization
 There are two ways of summarizing texts with the help of AI: Abstractive and Extractive. Abstractive summarization rewrites the whole document, the algorithm interprets the article and then rewrites it in smaller set of sentences. The summarization as we learned it in highschool and university is comparable to the abstractive summarization. Extractive summarization estimates which sentences are the most important. Which technique is better depends on the task at hand, abstractive summarizations mind be better when rewriting essays or creating an introduction for an article. Extractive might be better for highlighting the most important parts of an article.  
 
 For this purpose I've chosen to use extractive summarization for two reasons:
