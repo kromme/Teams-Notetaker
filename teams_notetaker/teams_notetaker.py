@@ -8,7 +8,8 @@ from google.cloud import speech
 from google.oauth2 import service_account
 from summarizer import Summarizer
 
-from utils import get_logger, check_cmd_application_available
+from .utils import get_logger, check_cmd_application_available
+from .speech_recognition import setup_google_speech, transcribe_part, transcribe_all_audioparts
 
 
 logger = get_logger('teams_notetaker')
@@ -179,63 +180,13 @@ class TeamsNotetaker():
     def _setup_google_speech(self):
         """Setup the config for google speech to text
         """
-
-        assert os.path.isfile(
-            self.key_file), 'Could not find key file, please visit https://codelabs.developers.google.com/codelabs/cloud-speech-text-python3#0'
-
-        # create credentials
-        credentials = service_account.Credentials.from_service_account_file(
-            self.key_file)
-
-        # setup the client and config
-        self.client = speech.SpeechClient(credentials=credentials)
-        self.config = speech.RecognitionConfig(
-            encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
-            sample_rate_hertz=16000,
-            language_code="en-US",
-            # Enable automatic punctuation
-            enable_automatic_punctuation=True,
-        )
-        logger.info('Initialized Google Speech')
-
-    def transcribe_part(self, audio_path: str) -> str:
-        """Transcribes an audio file
-        """
-        assert self.client, 'Google Client not set, run _setup_google_speech()'
-        assert self.config, 'Google Config not set, run _setup_google_speech()'
-
-        # init transcription for path
-        transcription = ""
-
-        # open audio
-        with io.open(audio_path, "rb") as f:
-            content = f.read()
-
-        # transcribe by sending to google
-        audio = speech.RecognitionAudio(content=content)
-        response = self.client.recognize(config=self.config, audio=audio)
-
-        # collecting results
-        for _, result in enumerate(response.results):
-            alternative = result.alternatives[0]
-            transcription += ' ' + alternative.transcript
-
-        return transcription
+        self.client, self.config = setup_google_speech(self.key_file)
 
     def transcribe(self):
-        """Transcribe all parts of the audio and concat them
+        """Transcribe all parts in the audio parts folder
         """
-        # init transcription
-        self.transcription = ""
-
-        # collect files to transcribe
-        files = os.listdir(self.AUDIO_PART_FOLDER)
-
-        # loop and transcribe
-        for i, audio_part in enumerate(files):
-            audio_part_path = f"{self.AUDIO_PART_FOLDER}/{audio_part}"
-            self.transcription += self.transcribe_part(audio_part_path)
-            logger.info(f'Transcribed {i+1} out of {len(files)}')
+        self.transcription = transcribe_all_audioparts(
+            audio_part_folder=self.AUDIO_PART_FOLDER, client=self.client, config=self.config)
 
     def summarize(self, transcription: str = None, notes_path: str = None, ratio: float = 0.2, num_sentences: int = None):
 
