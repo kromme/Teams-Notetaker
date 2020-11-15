@@ -51,6 +51,7 @@ def extract_audio(video_path: str = None, audio_path: str = None, overwrite: boo
 
 def remove_silences_from_audio(audio_path: str = None) -> str:
     """Removes silences from audio file using sox.
+    Sox doesn't allow the overwrite the same audio_path, create new one.
 
     Parameters
     ----------
@@ -79,3 +80,33 @@ def remove_silences_from_audio(audio_path: str = None) -> str:
 
     logger.info(f'Silences successfully removed')
     return silenced_audio_path
+
+
+def split_audio_file(audio_path: str, audio_part_folder: str):
+    """Split up the audio in parts of 50 seconds
+
+    Parameters
+    ----------
+    audio_path : str
+        Path to the audio file
+    audio_part_folder : str
+        Path to where audio paths should be saved
+    """
+
+    # checks whether ffmpeg can be found
+    output = subprocess.run('ffmpeg', shell=True, capture_output=True)
+    assert 'not recognized' not in str(output.stderr), 'ffmpeg not found'
+
+    # create name
+    audio_part_path = f'{audio_part_folder}/%03d.wav'
+
+    # split up
+    try:
+        command = f"""ffmpeg -i "{audio_path}" -f segment -segment_time 50 -c copy -reset_timestamps 1 "{audio_part_path}" """
+        subprocess.call(command, shell=True)
+    except Exception as e:
+        logger.error(
+            'Could not extract audio file from video.', exc_info=e)
+
+    logger.info(
+        f'Audio successfully split into {len(os.listdir(audio_part_folder))} parts')

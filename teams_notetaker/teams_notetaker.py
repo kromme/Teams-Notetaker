@@ -10,7 +10,7 @@ from summarizer import Summarizer
 
 from .utils import get_logger, check_cmd_application_available
 from .speech_recognition import setup_google_speech, transcribe_part, transcribe_all_audioparts
-
+from .audio_utils import extract_audio, remove_silences_from_audio, split_audio_file
 
 logger = get_logger('teams_notetaker')
 
@@ -46,7 +46,6 @@ class TeamsNotetaker():
         # init
         self.video_path = ''
         self.audio_path = ''
-        self.audio_part_path = ''
         self.transcription_path = ''
         self.notes_path = ''
         self.config = False
@@ -78,109 +77,31 @@ class TeamsNotetaker():
         # set paths
         self.video_path = f'{self.VIDEO_FOLDER}/{self.filename}{self.video_extension}'
         self.audio_path = f'{self.AUDIO_FOLDER}/{self.ts}_{self.filename}.wav'
-        self.audio_part_path = f'{self.AUDIO_PART_FOLDER}/%03d.wav'
         self.transcription_path = f'{self.TRANSCRIPTION_FOLDER}/{self.ts}_{self.filename}.txt'
         self.notes_path = f'{self.NOTES_FOLDER}/{self.ts}_{self.filename}.txt'
-
-    def extract_audio(self, video_path: str = None, audio_path: str = None, overwrite: bool = True):
-        """Extract audio file from a video using ffmpeg
-
-        Parameters
-        ----------
-        video_path : str
-            Path to the video file, default is set in class
-        audio_path : str
-            Path the audio file will be saved, default is set in class
-        overwrite : bool
-            Whether to overwrite the audio file when it already exists (default is True)
-        """
-        if video_path is None:
-            video_path = self.video_path
-        if audio_path is None:
-            audio_path = self.audio_path
-
-        # checks whether ffmpeg can be found
-        if not check_cmd_application_available('ffmpeg'):
-            logger.error('Could not load ffmpeg')
-            return
-
-        # checks whether video file is found
-        assert os.path.isfile(video_path), 'Can\'t find video'
-
-        # add overwrite parameter to ffmpeg
-        overwrite_param = '-y' if overwrite else ''
-        if os.path.isfile(audio_path) and overwrite:
-            logger.info(f'File already exists: overwriting {audio_path}')
-        elif os.path.isfile(audio_path) and not overwrite:
-            logger.info(
-                f'File already exists: not overwriting {audio_path}')
-            return
-
-        # Call ffmpeg
-        try:
-            # -ab 160k -ac 2 -ar 44100 -vn
-            command = f"ffmpeg {overwrite_param} -i {video_path} {audio_path}"
-            subprocess.call(command, shell=True)
-        except Exception as e:
-            logger.error(
-                'Could not extract audio file from video.', exc_info=e)
-
-        # check whether file is saved
-        assert os.path.isfile(
-            audio_path), 'Something went wrong saving the audio file'
-        logger.info(f'Audio successfully extracted to {audio_path}')
-
-    def remove_silences_from_audio(self, audio_path: str = None):
-        """Removes silences from audio file using sox
-        """
-
-        if audio_path is None:
-            audio_path = self.audio_path
-
-        # checks whether sox can be found
-        if not check_cmd_application_available('sox'):
-            logger.error('Could not load sox')
-            return
-
-        silenced_audio_path = audio_path.replace(
-            ".wav", "_silence_removed.wav")
-
-        try:
-            command = f"sox {audio_path} {silenced_audio_path} silence -l 1 0.1 1% -1 2.0 1%"
-            subprocess.call(command, shell=True)
-            self.audio_path = silenced_audio_path
-        except Exception as e:
-            logger.error(
-                'Could not extract audio file from video.', exc_info=e)
-
-        logger.info(f'Silences successfully removed')
-
-    def split_audio_file(self, audio_path: str = None):
-        """Split up the audio in parts of 50 seconds
-        """
-
-        if audio_path is None:
-            audio_path = self.audio_path
-
-        # checks whether ffmpeg can be found
-        output = subprocess.run('ffmpeg', shell=True, capture_output=True)
-        assert 'not recognized' not in str(output.stderr), 'ffmpeg not found'
-
-        # split up
-        try:
-            command = f"""ffmpeg -i "{audio_path}" -f segment -segment_time 50 -c copy -reset_timestamps 1 "{self.audio_part_path}" """
-            subprocess.call(command, shell=True)
-        except Exception as e:
-            logger.error(
-                'Could not extract audio file from video.', exc_info=e)
-
-        logger.info(
-            f'Audio successfully split into {len(os.listdir(self.AUDIO_PART_FOLDER))} parts')
 
     def _setup_google_speech(self):
         """Setup the config for google speech to text
         """
         self.client, self.config = setup_google_speech(self.key_file)
+
+    def prepare_audio(self):
+        """Prepare audio file by extracting the audio from the video, removing the
+        silences and splitting it up in parts of 50 seconds
+        """
+
+        # extract audio from the video
+        extract_audio(video_path=self.video_path, audio_path=self.audio_path)
+
+        # remove silences and renew audio_path name
+        self.audio_path = remove_silences_from_audio(
+            audio_path=self.audio_path)
+
+        # split the audio files because google can do 1 minute max
+        split_audio_file(audio_path=self.audio_path,
+                         audio_part_folder=self.AUDIO_PART_FOLDER)
+
+        logger.info('Audio preprocessing done')
 
     def transcribe(self):
         """Transcribe all parts in the audio parts folder
@@ -225,9 +146,7 @@ class TeamsNotetaker():
 
     def run(self):
 
-        self.extract_audio()
-        self.remove_silences_from_audio()
-        self.split_audio_file()
+        self.prepare_audio()
         self.transcribe()
         self.summarize()
         return self.notes
