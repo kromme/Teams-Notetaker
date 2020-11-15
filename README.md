@@ -1,26 +1,25 @@
 # Using AI to take notes of your Teams meeting
 This script allows you create a summary of the meeting you recorded in Teams. 
 
-
-
-### dependencies
-* google-cloud-speech: `pip install --user --upgrade google-cloud-speech` 
-* bert summarizer: `pip install bert-extractive-summarizer`
+## Installation
+Install ffmpeg and sox:
 * [ffmpeg](https://github.com/BtbN/FFmpeg-Builds/releases)    
 * [sox](https://sourceforge.net/projects/sox/files/latest/download)
 
+Install the Teams Notetaker package by pip installing it from Github:  
+```
+pip install git+https://github.com/kromme/Teams-Notetaker
+```
 
-### Usage
-
-#### Preparations
+## Preparations
 1. Get the video: From January, 11th 2021 all Teams recordings will be stored in OneDrive directly, see [here](https://docs.microsoft.com/en-gb/MicrosoftTeams/tmr-meeting-recording-change). Until then download it from [Stream](https://web.microsoftstream.com/) > My Content > video > Download video.
 2. Setup a [Google Speech API](https://cloud.google.com/docs/authentication/getting-started) and get the `key.json` and save this file in the working directory.
 3. Clone this repository: `git clone https://github.com/kromme/Teams-Notetaker.git`
 
-#### Run
+## Run
 ```
 from teams_notetaker import TeamsNotetaker
-tn = TeamsNotetaker(filename = 'Meeting.mp4', key_file = 'key_file.json')
+tn = TeamsNotetaker(filename = 'Meeting.mp4')
 tn.run()
 ```
 
