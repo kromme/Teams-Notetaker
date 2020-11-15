@@ -7,7 +7,7 @@ Now there is a new solution! Using AI to take notes of your Teams meeting. The o
 
 *Note*: we're going to setup a Google API for the speech recognition, there will be [costs](https://cloud.google.com/speech-to-text/pricing) associated with this.
 
-![](https://images.pexels.com/photos/1766604/pexels-photo-1766604.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260 "taking notes)
+![](https://images.pexels.com/photos/1766604/pexels-photo-1766604.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260 "taking notes")
 ## Installation
 Install ffmpeg and sox:
 * [ffmpeg](https://github.com/BtbN/FFmpeg-Builds/releases)    
