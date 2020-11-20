@@ -24,7 +24,7 @@ pip install git+https://github.com/kromme/Teams-Notetaker
 1. [Record the meeting](https://support.microsoft.com/en-us/office/record-a-meeting-in-teams-34dfbe7f-b07d-4a27-b4c6-de62f1348c24). Make sure you have consent from the others in the meeting.
 2. Get the video: From January, 11th 2021 all Teams recordings will be stored in OneDrive directly, see [here](https://docs.microsoft.com/en-gb/MicrosoftTeams/tmr-meeting-recording-change). Until then download it from [Stream](https://web.microsoftstream.com/) > My Content > video > Download video.
 3. Setup a [Google Speech API](https://cloud.google.com/docs/authentication/getting-started) and get the `key.json` and save this file in the working directory.
-4. Clone this repository: `git clone https://github.com/kromme/Teams-Notetaker.git`
+
 
 ## Run
 ```
