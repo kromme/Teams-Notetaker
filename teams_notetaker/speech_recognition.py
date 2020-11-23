@@ -1,6 +1,7 @@
 from .utils import get_logger
 from google.cloud import speech
 from google.oauth2 import service_account
+import tqdm
 import os
 import io
 logger = get_logger('speech_recognition')
@@ -64,11 +65,12 @@ def transcribe_all_audioparts(audio_part_folder: str, client, config) -> str:
     # collect files to transcribe
     files = os.listdir(audio_part_folder)
 
+    logger.info(f'Transcribing {len(files)} parts')
+
     # loop and transcribe
-    for i, audio_part in enumerate(files):
+    for _, audio_part in tqdm.tqdm(enumerate(files)):
         audio_part_path = f"{audio_part_folder}/{audio_part}"
         transcription += transcribe_part(
             audio_path=audio_part_path, client=client, config=config)
-        logger.info(f'Transcribed {i+1} out of {len(files)}')
 
     return transcription
