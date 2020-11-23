@@ -16,7 +16,7 @@ def extract_audio(video_path: str = None, audio_path: str = None, overwrite: boo
     overwrite : bool
         Whether to overwrite the audio file when it already exists (default is True)
     """
-
+    logger.info(f'Extract audio from "{video_path}" to "{audio_path}" ')
     # checks whether ffmpeg can be found
     if not check_cmd_application_available('ffmpeg'):
         logger.error('Could not load ffmpeg')
