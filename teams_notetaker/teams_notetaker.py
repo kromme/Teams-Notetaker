@@ -23,25 +23,28 @@ class TeamsNotetaker():
     def __init__(self,
                  filename: str,
                  key_file: str = 'key.json',
-                 video_folder: str = '.',
                  audio_folder: str = 'audio',
                  transcription_folder: str = 'transcripts',
                  notes_folder: str = 'notes',
+                 wd: str = None,
                  ):
-        filename, video_extension = os.path.splitext(filename)
-        self.filename = filename
+        self.wd = wd if wd else os.getcwd()
+
+        self.AUDIO_FOLDER = f'{self.wd}/{audio_folder}'
+        self.TRANSCRIPTION_FOLDER = f'{self.wd}/{transcription_folder}'
+        self.NOTES_FOLDER = f'{self.wd}/{notes_folder}'
+        self.video_path = f'{self.wd}/{filename}'
+
+        self.filename, video_extension = os.path.splitext(filename)
+        self.filename = self.filename.split('/')[-1].split('\\')[-1]
         self.video_extension = video_extension
         self.key_file = key_file
+
         self.ts = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
-        self.VIDEO_FOLDER = video_folder
-        self.AUDIO_FOLDER = audio_folder
-        self.TRANSCRIPTION_FOLDER = transcription_folder
-        self.NOTES_FOLDER = notes_folder
-        self.AUDIO_PART_FOLDER = f"{self.AUDIO_FOLDER}/{self.ts}_{filename}"
+        self.AUDIO_PART_FOLDER = f"{self.wd}/{audio_folder}/{self.ts}_{self.filename}"
         self.logfile = "log.log"
 
         # init
-        self.video_path = ''
         self.audio_path = ''
         self.transcription_path = ''
         self.notes_path = ''
@@ -57,8 +60,6 @@ class TeamsNotetaker():
 
     def _setup_folder(self):
 
-        os.makedirs(self.VIDEO_FOLDER) if not os.path.exists(
-            self.VIDEO_FOLDER) else True
         os.makedirs(self.AUDIO_FOLDER) if not os.path.exists(
             self.AUDIO_FOLDER) else True
         os.makedirs(self.AUDIO_PART_FOLDER) if not os.path.exists(
@@ -72,7 +73,6 @@ class TeamsNotetaker():
         # set timestamp
 
         # set paths
-        self.video_path = f'{self.VIDEO_FOLDER}/{self.filename}{self.video_extension}'
         self.audio_path = f'{self.AUDIO_FOLDER}/{self.ts}_{self.filename}.wav'
         self.transcription_path = f'{self.TRANSCRIPTION_FOLDER}/{self.ts}_{self.filename}.txt'
         self.notes_path = f'{self.NOTES_FOLDER}/{self.ts}_{self.filename}.txt'
